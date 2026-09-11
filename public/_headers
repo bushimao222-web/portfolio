@@ -1,0 +1,22 @@
+# ==========================================
+# 静态托管响应头 / Static hosting headers
+#
+# 这个文件是 Netlify / Cloudflare Pages 的约定文件：
+# 部署时会被自动读取，等价于原来的 next.config.ts 里的 headers()。
+#
+# 放在 public/ 下，构建后会被复制到 out/ 根目录。
+# ==========================================
+
+/*
+  X-DNS-Prefetch-Control: on
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: origin-when-cross-origin
+
+# Next.js 的静态资源带内容哈希，可以长期强缓存
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 图片资源同样长期缓存
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
