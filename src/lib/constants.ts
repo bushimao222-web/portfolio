@@ -53,26 +53,35 @@ export const FEATURES = {
 };
 
 // 顶部导航栏 / 页脚导航共用的菜单
+//
+// labelZh 是中文翻译，显示在英文后面（如 "Home 首页"）。
+// 不想要中文的话，把用到 labelZh 的地方删掉即可，不影响其它功能。
+//
 // 注意：Contact 用的是 "#contact" 锚点，指向页脚，不是独立页面
 export const NAV_ITEMS = [
   {
     label: "Home",
+    labelZh: "首页",
     href: "/",
   },
   {
     label: "About",
+    labelZh: "关于我",
     href: "/about",
   },
   {
     label: "Experience",
+    labelZh: "工作经历",
     href: "/experience",
   },
   {
     label: "Projects",
+    labelZh: "项目",
     href: "/projects",
   },
   {
     label: "Contact",
+    labelZh: "联系方式",
     href: "#contact",
   },
 ];

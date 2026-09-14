@@ -24,17 +24,18 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
     const sequence = async () => {
       try {
-        // Step 1: Text reveal "Are You Ready?" on a solid dark screen
-        await introTextControls.start("animate");
+        // Step 1 + 2 并行：文字动画和第一段曲线扫屏同时进行。
+        // 原来是 await 串行，白白多等 1.2 秒。
+        await Promise.all([
+          introTextControls.start("animate"),
+          curveUpControls.start("animate"),
+        ]);
 
-        // Step 2: Sweep up first curve
-        await curveUpControls.start("animate");
-
-        // Step 3: Show percentage loader
+        // Step 3: 显示百分比进度
         setIsRunning(true);
         await counterControls.start("animate");
 
-        // Step 4: Sweep down second curve
+        // Step 4: 第二段曲线扫屏，揭开首页内容
         await curveDownControls.start("animate");
 
         // Hide overlays to reveal home content
@@ -58,7 +59,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
   useEffect(() => {
     if (!isRunning) return;
 
-    const duration = 2800; // time in ms
+    const duration = 1400; // time in ms（原来是 2800，配合整体压缩到约 3 秒）
     const startTime = performance.now();
     let rafId: number;
 
@@ -90,8 +91,8 @@ export function Preloader({ onComplete }: PreloaderProps) {
           animate: {
             opacity: [1, 1, 0],
             transition: {
-              duration: 2.6,
-              times: [0, 1.8 / 2.6, 1],
+              duration: 0.8,
+              times: [0, 0.72, 1],
               ease: "easeInOut"
             }
           }
@@ -106,8 +107,8 @@ export function Preloader({ onComplete }: PreloaderProps) {
               opacity: [0, 1, 1, 0],
               y: [15, 0, 0, -10],
               transition: {
-                duration: 2.6,
-                times: [0, 0.8 / 2.6, 1.8 / 2.6, 1],
+                duration: 0.8,
+                times: [0, 0.25, 0.7, 1],
                 ease: "easeInOut"
               }
             }
@@ -129,32 +130,42 @@ export function Preloader({ onComplete }: PreloaderProps) {
           animate: {
             opacity: [0, 1, 1, 0],
             transition: {
-              duration: 3.1,
-              times: [0, 0.05, 0.9, 1],
+              duration: 1.45,
+              times: [0, 0.1, 0.85, 1],
               ease: "easeInOut"
             }
           }
         }}
         className="absolute inset-0 flex items-center justify-center z-30"
       >
-        <div className="flex flex-col items-center gap-4 w-[280px] md:w-[380px]">
-          <div className="flex items-baseline justify-between w-full px-1">
-            <span className="text-white/60 text-xs font-mono tracking-[0.3em] uppercase">
-              INITIALIZING PORTFOLIO
+        <div className="flex flex-col items-center gap-5 w-[300px] md:w-[460px]">
+          {/* 加载文案
+              原先是 "INITIALIZING PORTFOLIO"（偏机械感）。
+              现改为中英双行，更贴合"个人 IP + 新能源出海"的定位。
+              想换文案只改下面这两个 span 即可。 */}
+          <div className="flex flex-col items-center gap-1.5 w-full">
+            <span className="text-white/85 text-sm md:text-base tracking-[0.35em] uppercase font-mono">
+              CONNECTING TO KEVIN SHI
             </span>
-            <span className="text-white/80 text-xs font-mono tabular-nums">
-              {percent}%
+            <span className="text-white/45 text-[11px] md:text-xs tracking-[0.3em]">
+              正在接入 · 李世豪
             </span>
           </div>
 
-          <div className="relative w-full h-[2px] bg-white/10 rounded-full overflow-hidden">
+          {/* 进度百分比 */}
+          <span className="text-white/80 text-sm md:text-base font-mono tabular-nums tracking-widest">
+            {percent}%
+          </span>
+
+          {/* 进度条：从 2px 加粗到 5px，并加了柔光 */}
+          <div className="relative w-full h-[5px] bg-white/10 rounded-full overflow-hidden">
             <motion.div
-              className="absolute inset-y-0 left-0 rounded-full bg-white/90"
+              className="absolute inset-y-0 left-0 rounded-full bg-white/90 shadow-[0_0_14px_rgba(255,255,255,0.65)]"
               initial={{ width: "0%" }}
               variants={{
                 animate: {
                   width: "100%",
-                  transition: { duration: 2.8, ease: [0.25, 0.1, 0.25, 1] }
+                  transition: { duration: 1.4, ease: [0.25, 0.1, 0.25, 1] }
                 }
               }}
             />

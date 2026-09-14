@@ -96,35 +96,39 @@ export function About() {
             </div>
 
             {/* ================================
-                右侧：头像 + 教育经历
+                右侧：头像 + 教育经历（整体居中）
             ================================= */}
-            <div className="relative flex flex-col items-center">
+            <div className="flex flex-col items-center">
 
-              {/* 头像 */}
-              <div className="absolute -top-24">
-                <div className="relative w-72 h-72 rounded-full p-[4px] bg-gradient-to-br from-indigo-500 via-violet-500 to-slate-400 shadow-2xl">
-                  <div className="rounded-full overflow-hidden w-full h-full relative">
-                    <Image
-                      src="/images/profile.jpg"
-                      alt="李世豪 Kevin"
-                      fill
-                      sizes="300px"
-                      className="object-cover object-[center_25%]"
-                      priority
-                    />
-                  </div>
+              {/* 头像
+                  ⚠️ 这里用的是 /images/profile.jpg
+                     和首页悬停浮出的照片是两张不同的图片，可以分别换。
+
+                  外圈颜色：原来是紫色渐变（indigo → violet → slate），
+                  现在改成白色系（白 → 浅灰 → 白）。
+
+                  object-[center_25%] 表示从上往下 25% 的位置开始裁切，
+                  适合人物在画面中间偏上的照片。如果脸被裁掉了，
+                  把 25% 调小（如 center_15%）或调大（如 center_35%）试试。 */}
+              <div className="relative w-72 h-72 rounded-full p-[4px] bg-gradient-to-br from-white via-zinc-200 to-zinc-400 shadow-2xl">
+                <div className="rounded-full overflow-hidden w-full h-full relative">
+                  <Image
+                    src="/images/profile.jpg"
+                    alt="李世豪 Kevin"
+                    fill
+                    sizes="300px"
+                    className="object-cover object-[center_25%]"
+                    priority
+                  />
                 </div>
               </div>
 
-              <br />
-              <br />
-              <br />
-
               {/* 教育经历数据
-                  数据来源：
-                  src/data/achievements.ts
-              */}
-              <div className="pt-40 w-full space-y-4">
+                  数据来源：src/data/achievements.ts
+
+                  内容整体居中对齐（text-center + items-center），
+                  和上方的圆形头像中心对齐。 */}
+              <div className="mt-12 w-full max-w-sm space-y-4">
                 {educationData.map((edu, index) => (
                   <motion.div
                     key={edu.id}
@@ -133,40 +137,34 @@ export function About() {
                     viewport={{ once: true }}
                     variants={ANIMATION_VARIANTS.fadeUp}
                     transition={{ delay: index * 0.1 }}
-                    className="p-6 rounded-lg border bg-card hover:shadow-lg transition-shadow"
+                    className="p-6 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-center"
                   >
-                    <div className="flex items-start space-x-4">
+                    {/* 教育图标：居中显示在卡片顶部 */}
+                    <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center">
+                      <GraduationCap className="h-6 w-6" />
+                    </div>
 
-                      {/* 教育图标 */}
-                      <div className="p-3 rounded-full bg-primary/10 text-primary">
-                        <GraduationCap className="h-6 w-6" />
-                      </div>
+                    {/* 学历 */}
+                    <h3 className="font-semibold text-lg text-white">
+                      {edu.degree}
+                    </h3>
 
-                      {/* 教育信息 */}
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">
-                          {edu.degree}
-                        </h3>
+                    {/* 学校 */}
+                    <p className="mt-1 text-zinc-300 font-medium">
+                      {edu.institution}
+                    </p>
 
-                        <p className="text-primary font-medium">
-                          {edu.institution}
-                        </p>
+                    {/* 时间 + 地点：居中排列 */}
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-zinc-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {edu.duration}
+                      </span>
 
-                        <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
-
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {edu.duration}
-                          </span>
-
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {edu.location}
-                          </span>
-
-                        </div>
-                      </div>
-
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {edu.location}
+                      </span>
                     </div>
                   </motion.div>
                 ))}

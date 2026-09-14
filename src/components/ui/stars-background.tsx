@@ -60,9 +60,15 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({ className }) =>
     resize();
     window.addEventListener("resize", resize);
 
+    // ---------- 光标引力场参数 ----------
+    // spacing      点阵间距（越小越密，36 是能看出"网格感"又不显脏的平衡点）
+    // maxDistance  引力作用半径。原来是 120，稍大一点就完全没反应，过渡很突兀；
+    //              现在扩到 180，影响范围更大、边界感更弱
+    // pullStrength 最大拖拽位移。原来 6，配合更大的半径会显得"拽得太狠"，
+    //              降到 4，让整片点阵是"缓慢被吸引"而不是"被吸走"
     const spacing = 36;
-    const maxDistance = 120;
-    const pullStrength = 6;
+    const maxDistance = 180;
+    const pullStrength = 4;
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
@@ -77,16 +83,20 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({ className }) =>
       }
 
       if (mouse.x !== -1000) {
+        // 光标处的大范围柔光。
+        // 半径 300（原来 250），配合更大的引力半径；
+        // 透明度压到 4% / 1.5% —— 这是"氛围"不是"特效"，
+        // 越淡越高级，一旦明显就会盖过内容。
         const gradient = ctx.createRadialGradient(
           mouse.x,
           mouse.y,
           0,
           mouse.x,
           mouse.y,
-          250
+          300
         );
-        gradient.addColorStop(0, "rgba(99, 102, 241, 0.05)");
-        gradient.addColorStop(0.5, "rgba(139, 92, 246, 0.02)");
+        gradient.addColorStop(0, "rgba(99, 102, 241, 0.04)");
+        gradient.addColorStop(0.5, "rgba(139, 92, 246, 0.015)");
         gradient.addColorStop(1, "transparent");
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
@@ -119,8 +129,10 @@ export const StarsBackground: React.FC<StarBackgroundProps> = ({ className }) =>
               const force = (maxDistance - dist) / maxDistance;
               drawX += (dx / dist) * pullStrength * force;
               drawY += (dy / dist) * pullStrength * force;
+              // 亮度提升幅度从 0.35 降到 0.28：
+              // 半径变大后同时变亮会显得"糊"，稍微收一点更清晰
               radius = 1.0 + force * 1.5;
-              opacity = 0.07 + force * 0.35;
+              opacity = 0.07 + force * 0.28;
             }
           }
 

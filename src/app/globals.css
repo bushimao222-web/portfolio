@@ -369,22 +369,116 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ==========================================
+   滚动条 / Scrollbar
+   ==========================================
+   风格：白色胶囊滑块 + 外发光 + 静止时自上而下的扫光。
+
+   ⚠️ 关于「扫光」的实现限制（重要）：
+      ::-webkit-scrollbar-thumb 只支持少数几个属性，
+      transform / 伪元素 / 内部动画都不生效，
+      所以没法真的在上面滑一个光点。
+      这里的做法是给滑块铺一层「比自身略亮的竖向渐变」，
+      再让它缓慢移动 background-position ——
+      视觉上就是一道柔光从上往下扫过滑块。周期 5 秒，很克制。
+
+   ::-webkit-scrollbar 只对 Chrome / Edge / Safari 生效；
+   Firefox 走下面 @supports 里的 scrollbar-* 属性（没有扫光，
+   这是浏览器限制，Firefox 不支持自定义滚动条动画）。
+   ========================================== */
+@keyframes scrollbar-sweep {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 200%;
+  }
+}
+
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
+  /* 亮白渐变 + 缓慢移动，制造扫光 */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.58) 0%,
+    rgba(255, 255, 255, 0.96) 45%,
+    rgba(255, 255, 255, 0.58) 100%
+  );
+  background-size: 100% 200%;
+  background-position: 0% 0%;
+  animation: scrollbar-sweep 5s linear infinite;
+  border-radius: 9999px;
+  /* 内缩，滑块不贴边 */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  /* 白色柔光 */
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.6),
+    0 0 10px rgba(255, 255, 255, 0.3);
+  transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.3);
+  background-color: #ffffff;
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.9),
+    0 0 18px rgba(255, 255, 255, 0.6);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #ffffff;
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 1),
+    0 0 26px rgba(255, 255, 255, 0.8);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox：白色滚动条（无扫光动画，Firefox 不支持） */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.85) rgba(255, 255, 255, 0.04);
+  }
+}
+
+/* ==========================================
+   光标静止脉动 / Idle Cursor Pulse
+   ==========================================
+   因为桌面端全局隐藏了原生光标，鼠标停下不动时那个 12px 白点
+   在深色背景上不够显眼，访客可能一时"找不到鼠标"。
+
+   这个动画让白点在【静止不动】时轻微呼吸（配合外发光），
+   一旦移动就自动停止（由 custom-cursor.tsx 用 React 状态控制）。
+
+   0% → 62% 是静止阶段（脉动 2 次），
+   62% → 100% 是淡出阶段（移动时光晕收起，回到纯净白点）。
+   ========================================== */
+@keyframes cursor-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+  30% {
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.1);
+  }
+  62% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
+  }
+}
+
+.cursor-pulse {
+  animation: cursor-pulse 2s ease-in-out infinite;
 }
 
 ::selection {
@@ -403,8 +497,30 @@ html {
   background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
 
+/* ==========================================
+   原生光标的处理（桌面端全局隐藏）
+   ==========================================
+   桌面端（pointer: fine）把原生光标全部隐藏，
+   由自定义光标（src/components/ui/custom-cursor.tsx）统一负责指示位置。
+
+   ⚠️ 只保留一类例外：输入框 / 文本域 / 可编辑区域。
+      这些地方如果隐藏原生光标，就看不见输入焦点的位置了，
+      所以保留 cursor: auto。
+
+   ⚠️ 触屏设备不受影响 —— 外层 @media (pointer: fine) 已经排除掉了。
+   ========================================== */
 @media (pointer: fine) {
-  body, a, button, [role='button'] {
+  /* 全局隐藏：包括普通区域、文本选择（::selection）、拖拽（:active） */
+  *,
+  *::before,
+  *::after {
     cursor: none !important;
+  }
+
+  /* 例外：输入类元素保留原生光标，否则看不见焦点位置 */
+  input,
+  textarea,
+  [contenteditable='true'] {
+    cursor: auto !important;
   }
 }

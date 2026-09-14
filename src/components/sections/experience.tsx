@@ -63,27 +63,28 @@ export function Experience() {
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                   
                   <div className="relative z-10">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-                      <div>
-                        <h3 className="text-2xl font-bold tracking-tight text-white mb-2 group-hover:translate-x-1 transition-transform duration-500">
-                          {exp.role}
-                        </h3>
-                        <p className="text-white font-medium flex items-center gap-2 transition-colors duration-500">
-                          <Building2 className="w-4 h-4 text-white" />
-                          {exp.company}
-                        </p>
-                      </div>
-                      
-                      <div className="flex flex-col items-start sm:items-end gap-2 text-xs font-mono text-white tracking-wider">
-                        <span className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                          <Calendar className="w-3 h-3 text-white" />
-                          {exp.duration}
-                        </span>
-                        <span className="flex items-center gap-2 px-3 py-1.5">
-                          <MapPin className="w-3 h-3 text-white" />
-                          {exp.location}
-                        </span>
-                      </div>
+                    {/* 顶部：时间 + 地点（放在职位上方）
+                        两者用 flex-wrap，窄屏时自动换到下一行 */}
+                    <div className="flex flex-wrap items-center gap-2 mb-5 text-xs font-mono text-white tracking-wider">
+                      <span className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        <Calendar className="w-3 h-3 text-white" />
+                        {exp.duration}
+                      </span>
+                      <span className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                        <MapPin className="w-3 h-3 text-white" />
+                        {exp.location}
+                      </span>
+                    </div>
+
+                    {/* 职位名称（大字） + 公司名称 */}
+                    <div className="mb-6">
+                      <h3 className="text-2xl font-bold tracking-tight text-white mb-2 group-hover:translate-x-1 transition-transform duration-500">
+                        {exp.role}
+                      </h3>
+                      <p className="text-white font-medium flex items-center gap-2 transition-colors duration-500">
+                        <Building2 className="w-4 h-4 text-white shrink-0" />
+                        {exp.company}
+                      </p>
                     </div>
                     
                     <p className="text-white text-sm leading-relaxed mb-6 font-light transition-colors duration-500">

@@ -93,13 +93,16 @@ export function Navbar() {
                     <Link
                       href={item.href}
                       className={cn(
-                        "text-sm font-medium transition-all px-3 py-1.5 rounded-lg",
+                        "text-sm font-medium transition-all px-3 py-1.5 rounded-lg whitespace-nowrap",
                         active
                           ? "text-white bg-white/10"
                           : "text-zinc-400 hover:text-white hover:bg-white/5"
                       )}
                     >
                       {item.label}
+                      <span className="ml-1.5 text-[11px] font-normal opacity-60">
+                        {item.labelZh}
+                      </span>
                     </Link>
 
                     {active && (
@@ -180,13 +183,16 @@ export function Navbar() {
                             href={item.href}
                             onClick={() => setOpen(false)}
                             className={cn(
-                              "block py-3 px-4 text-lg font-medium rounded-xl transition-all border border-transparent",
+                              "flex items-baseline gap-2 py-3 px-4 text-lg font-medium rounded-xl transition-all border border-transparent",
                               pathname === item.href
                                 ? "text-white bg-white/10 border-white/20"
                                 : "text-zinc-400 hover:bg-white/5 hover:text-white"
                             )}
                           >
-                            {item.label}
+                            <span>{item.label}</span>
+                            <span className="text-sm font-normal opacity-60">
+                              {item.labelZh}
+                            </span>
                           </Link>
                         </motion.div>
                       ))}

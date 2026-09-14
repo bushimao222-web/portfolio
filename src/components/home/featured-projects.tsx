@@ -3,10 +3,9 @@
 import { useRef, useLayoutEffect, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowUpRight, Code2, Github } from "lucide-react";
+import { ArrowUpRight, Github } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { projects as allProjects } from "@/data/projects";
-import { LiquidImage } from "@/components/animations";
 
 const BG = "#1C1B1A";
 
@@ -89,8 +88,13 @@ export function FeaturedProjects() {
             font-size: 2.5rem;
           }
           .proj-body {
-            grid-template-columns: 1.1fr 0.9fr;
+            grid-template-columns: 1fr;
           }
+        }
+        /* 图片已隐藏，文字内容独占整行 */
+        .proj-body-text {
+          width: 100%;
+          max-width: 100%;
         }
       `}</style>
 
@@ -147,7 +151,9 @@ export function FeaturedProjects() {
                   </div>
 
                   <div className="proj-body border-b border-white/10">
-                    {/* Left Column: Image */}
+                    {/* 项目配图已按要求隐藏（只展示文字内容）。
+                        如果想恢复图片，把下面这整个 div 的注释去掉即可。 */}
+                    {/*
                     <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] group shadow-2xl">
                       {project.image ? (
                         <div className="relative w-full h-full">
@@ -164,21 +170,25 @@ export function FeaturedProjects() {
                         </div>
                       )}
                     </div>
+                    */}
 
-                    {/* Right Column: Description */}
-                    <div className="flex flex-col justify-between items-start gap-6">
+                    {/* 文字内容：图片隐藏后占满整行 */}
+                    <div className="proj-body-text flex flex-col justify-between items-start gap-6">
                       <div className="space-y-4 w-full">
                         <p className="text-zinc-400 text-sm md:text-base font-light leading-relaxed">
                           {project.longDescription || project.description}
                         </p>
 
-                        <div className="space-y-2">
-                          <span className="text-zinc-500 text-xs font-mono tracking-widest uppercase">Key Features</span>
-                          <ul className="grid grid-cols-1 gap-2 text-xs text-zinc-400">
+                        {/* 关键特性：文字加大加粗，让它成为这一块的视觉重点 */}
+                        <div className="space-y-3">
+                          <span className="block text-zinc-300 text-xs md:text-sm font-mono font-bold tracking-widest uppercase">
+                            Key Features
+                          </span>
+                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm md:text-base font-semibold text-zinc-100">
                             {project.features.slice(0, 4).map((feature, fIdx) => (
-                              <li key={fIdx} className="flex items-start gap-2">
-                                <span className="mt-[6px] h-1 w-1 rounded-full bg-white shrink-0" />
-                                <span className="leading-tight">{feature}</span>
+                              <li key={fIdx} className="flex items-start gap-2.5">
+                                <span className="mt-[9px] h-1.5 w-1.5 rounded-full bg-white shrink-0" />
+                                <span className="leading-snug">{feature}</span>
                               </li>
                             ))}
                           </ul>
@@ -190,7 +200,7 @@ export function FeaturedProjects() {
                               <Badge
                                 key={tech}
                                 variant="secondary"
-                                className="border border-white/10 bg-white/5 text-[10px] md:text-[11px] font-normal text-zinc-300 py-1 px-2.5 rounded-md hover:bg-white/10 hover:text-white transition-colors"
+                                className="border border-white/10 bg-white/5 text-[11px] md:text-xs font-medium text-zinc-200 py-1 px-2.5 rounded-md hover:bg-white/10 hover:text-white transition-colors"
                               >
                                 {tech}
                               </Badge>

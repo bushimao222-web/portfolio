@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ANIMATION_VARIANTS } from "@/lib/constants";
@@ -14,6 +14,31 @@ import {
 import { ChevronDown } from "lucide-react";
 import { StarsBackground } from "@/components/ui/stars-background";
 
+// ==========================================
+// 首页姓名 + 悬停浮出照片
+//
+// 【尺寸调整】
+// 照片尺寸在 className 里，两处要一起改（保持一致）：
+//   w-64 h-80          → 手机 (256 x 320)
+//   md:w-[26rem] md:h-96 → 桌面 (416 x 384)
+// 1 个 Tailwind 间距单位 = 4px。
+//
+// ⚠️ 触发区高度 = 照片高度。再往上调（比如 md:h-[30rem]）可能会遮住下方按钮。
+//
+// 照片文件：public/images/profile-hero.jpg
+//
+// 【交互逻辑说明】
+// 照片是「打开后要移动到照片上也保持显示」的，
+// 所以不能用纯 CSS 的 group-hover（鼠标一离开文字就关），
+// 这里改用 React 状态控制：
+//   鼠标进入 → 打开
+//   鼠标离开整个区域（文字 + 照片）→ 关闭
+// 因为触发区(trigger)的高度就等于照片高度，
+// 鼠标从名字移到照片上时仍然在区域内，所以不会关闭。
+//
+// 手机端没有悬停概念，照片改为常驻显示（用 max-md: 前缀控制）。
+// ==========================================
+
 function AnimatedName() {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -21,48 +46,111 @@ function AnimatedName() {
   const smoothX = useSpring(mouseX, springConfig);
   const smoothY = useSpring(mouseY, springConfig);
 
+  // 照片是否展开
+  const [isOpen, setIsOpen] = useState(false);
+
+  // 是否为手机/窄屏。手机没有悬停概念，照片改为常驻显示。
+  // 初始值是 false（和服务器渲染一致），挂载后再根据真实宽度修正，
+  // 避免服务端/客户端渲染不一致导致的水合报错。
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  // 照片/姓名的展开状态：手机端始终展开，桌面端看 isOpen
+  const show = isOpen || isMobile;
+
   const handleMouseMove = (e: React.MouseEvent) => {
     const { clientX, clientY } = e;
     const { innerWidth, innerHeight } = window;
-    const x = (clientX / innerWidth - 0.5) * 40; // max 20px shift
+    const x = (clientX / innerWidth - 0.5) * 40; // 最大位移 20px
     const y = (clientY / innerHeight - 0.5) * 40;
     mouseX.set(x);
     mouseY.set(y);
   };
 
+  const handleMouseEnter = () => {
+    setIsOpen(true);
+  };
+
+  // 鼠标离开整个区域时：关闭照片 + 视差归零
   const handleMouseLeave = () => {
+    setIsOpen(false);
     mouseX.set(0);
     mouseY.set(0);
   };
 
   return (
-    <div 
-      className="relative group inline-block"
-      onMouseMove={handleMouseMove}
+    <div
+      className="relative inline-block"
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
     >
-      <motion.h1 
-        style={{ x: smoothX, y: smoothY }}
-        className="relative z-20 font-display text-5xl md:text-7xl lg:text-8xl font-black mb-6 overflow-hidden select-none pb-4 tracking-tighter text-white cursor-pointer transition-colors duration-500 group-hover:text-white/20"
+      {/* 照片：绝对定位居中。
+          ⚠️ 关键：状态相关的样式（透明度/缩放/旋转/模糊）全部用内联 style 控制，
+             不再用 md: 前缀的 Tailwind 类。
+             原因：之前 md:blur-[6px] 和 md:blur-0 同时存在，谁生效取决于
+             Tailwind 的生成顺序，结果就是改了没反应。
+
+          pointer-events-none 让鼠标事件穿透到下面的触发区，
+          这样鼠标停在照片任何位置都还在区域内，不会关闭。 */}
+      <motion.div
+        style={{
+          x: useTransform(smoothX, (x) => -x * 1.5),
+          y: useTransform(smoothY, (y) => -y * 1.5),
+          // 展开：清晰、放大、轻微右倾；收起：模糊、缩小、左倾
+          opacity: show ? 1 : 0,
+          transform: show ? "scale(1) rotate(3deg)" : "scale(0.9) rotate(-6deg)",
+          filter: show ? "blur(0px)" : "blur(6px)",
+          transition:
+            "opacity 500ms ease-out, transform 500ms ease-out, filter 500ms ease-out",
+        }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-64 h-80 md:w-[26rem] md:h-96 pointer-events-none"
       >
-        <MaskedHeading text="李世豪 · Kevin" delay={0.3} />
-      </motion.h1>
-      
-      {/* Floating Hover Photo with Inverse Parallax */}
-      <motion.div 
-        style={{ x: useTransform(smoothX, x => -x * 1.5), y: useTransform(smoothY, y => -y * 1.5) }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-64 md:w-64 md:h-80 pointer-events-none z-10 opacity-0 group-hover:opacity-100 group-hover:scale-100 scale-90 transition-all duration-500 ease-out -rotate-6 group-hover:rotate-3"
-      >
-        <div className="w-full h-full relative rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/20">
+        <div className="w-full h-full relative rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.7)] border border-white/20 bg-[#0A0A0A]">
           <Image
-            src="/images/profile.jpg"
-            alt="李世豪  Kevin"
+            src="/images/profile-hero.jpg"
+            alt="李世豪 Kevin"
             fill
+            sizes="(max-width: 768px) 256px, 416px"
             className="object-cover object-[center_25%]"
             priority
           />
         </div>
       </motion.div>
+
+      {/* 姓名：垂直水平居中在容器里。
+          ⚠️ 这里绝对不能用 h-0 —— 姓名自带 overflow-hidden（遮罩动画需要），
+             高度为 0 会把文字上下裁掉，看起来就是"字变小/被切平"。
+
+          容器高度由 h-80 / md:h-96 决定（= 照片高度），
+          所以鼠标可以在「文字 ↔ 照片」之间自由移动而不关闭，
+          容器也只占照片那一块，不会盖住下方按钮。
+
+          z-40 高于照片，保证悬停事件由它接收。 */}
+      <div className="relative z-40 h-80 md:h-96 flex items-center justify-center">
+        <motion.h1
+          style={{
+            x: smoothX,
+            y: smoothY,
+            // 照片展开时姓名完全淡出。
+            // 故意用 opacity 0 而不是半透明 ——
+            // 姓名文字比照片宽，只要留一点透明度就会从照片左右两边露出来。
+            opacity: show ? 0 : 1,
+            filter: show ? "blur(4px)" : "blur(0px)",
+            transition: "opacity 400ms ease-out, filter 400ms ease-out",
+          }}
+          className="flex items-center font-display text-5xl md:text-7xl lg:text-8xl font-black overflow-hidden select-none pb-4 tracking-tighter cursor-pointer"
+        >
+          <MaskedHeading text="李世豪 · Kevin" delay={0.3} />
+        </motion.h1>
+      </div>
     </div>
   );
 }

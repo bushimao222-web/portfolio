@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { MaskedHeading, WordReveal } from "@/components/animations";
+import { MaskedHeading } from "@/components/animations";
 
 export function StatusBanner() {
   const containerRef = useRef<HTMLElement>(null);
@@ -11,8 +11,18 @@ export function StatusBanner() {
     offset: ["start end", "end start"]
   });
 
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.95]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  // ---------- 滚动联动的淡入淡出 ----------
+  //
+  // ⚠️ 原来这里是 opacity: [0, 0.8] → [1, 0]
+  //    意思是「一进入视口就开始变透明」，等滚到页面中间时
+  //    透明度已经掉到 0.5 以下，所以停留时内容是灰的。
+  //    这就是用户反馈的"淡入淡出做反了"。
+  //
+  // 现在的曲线：
+  //   0 → 0.45   完全不透明（进入、停留阶段，内容清晰）
+  //   0.45 → 1   才逐渐淡出（离开视口时）
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.94]);
+  const opacity = useTransform(scrollYProgress, [0, 0.45, 1], [1, 1, 0]);
   const borderRadius = useTransform(scrollYProgress, [0, 1], [0, 24]);
 
   return (
@@ -35,22 +45,24 @@ export function StatusBanner() {
             <span className="font-mono text-zinc-400">Current Status</span>
           </div>
 
-          {/* 中文用 MaskedHeading：它按「字符」拆分，
-               中文也安全（按空格拆分的 WordReveal 只适合英文句子）。
-               标题做成单行，避免两行长短不一导致 <br /> 处错位。 */}
-          <h2 className="font-display text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white">
-            <MaskedHeading text="从想法到落地" delay={0.1} />
-            <span className="block mt-3 text-zinc-500 text-2xl md:text-4xl lg:text-5xl">
+          {/* 标题：中英各占一行，都居中
+              中文用 MaskedHeading（按「字符」拆分，中文安全）。 */}
+          <h2 className="flex flex-col items-center gap-3 font-display font-black tracking-tight">
+            <span className="text-3xl md:text-5xl lg:text-6xl text-white">
+              <MaskedHeading text="从想法到落地" delay={0.1} />
+            </span>
+            <span className="text-xl md:text-3xl lg:text-4xl text-zinc-500">
               <MaskedHeading text="From Ideas to Execution" delay={0.4} />
             </span>
           </h2>
 
-          <div className="mt-8 text-lg md:text-2xl text-zinc-300 font-light leading-relaxed max-w-3xl mx-auto">
-            <WordReveal
-              text="覆盖新能源充电基础设施全链路 —— 海外获客渠道、充电桩产品供应链、产品与主控设计，以及 OCPP 平台落地。"
-              delay={0.8}
-            />
-          </div>
+          {/* 说明文字
+              原来是 WordReveal（按空格拆词 + 逐个上浮），中文按空格拆不开，
+              整段会被当成"一个超长单词"，所以排版很怪、还会挤成一大块。
+              这里改成普通段落，字号略小、行高放宽、限制宽度，阅读更顺。 */}
+          <p className="mt-8 max-w-3xl mx-auto text-base md:text-lg text-zinc-400 font-light leading-loose">
+            覆盖新能源充电基础设施全链路 —— 海外获客渠道、充电桩产品供应链、产品与主控设计，以及 OCPP 平台落地。
+          </p>
         </div>
       </motion.div>
     </section>

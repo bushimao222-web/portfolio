@@ -16,7 +16,7 @@ export function DarkCurveSweepUp({ controls }: CurveProps) {
         animate: {
           y: "0vh",
           transition: {
-            duration: 1.2,
+            duration: 0.5,
             ease: [0.76, 0, 0.24, 1]
           }
         }
@@ -45,7 +45,7 @@ export function DarkCurveSweepDown({ controls }: CurveProps) {
         animate: {
           y: "0vh",
           transition: {
-            duration: 1.2,
+            duration: 0.5,
             ease: [0.76, 0, 0.24, 1]
           }
         }

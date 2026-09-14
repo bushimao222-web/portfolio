@@ -24,6 +24,13 @@ export function PageWrapper({ children }: { children: React.ReactNode }) {
 
     requestAnimationFrame(raf);
 
+    // 关掉浏览器的自动滚动位置恢复。
+    // 否则刷新时会被还原到上次的滚动位置（经常落到页脚的 Contact 那一栏），
+    // 而不是停在首页顶部。
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
     return () => {
       lenis.destroy();
     };
