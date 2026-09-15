@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // 动画组件统一出口
 //
 // 这里每导出一样东西，即使没人用也会被打包进项目。
@@ -26,7 +26,7 @@ export { SplitText } from './split-text';
 export { MagneticButton } from './magnetic-button';
 export { StaggerContainer, StaggerItem } from './stagger-container';
 export { WaveText } from './wave-text';
-export { ScrollProgress } from './scroll-progress';
+export { ScrollProgress, ScrollGlow } from './scroll-progress';
 export { Preloader } from './preloader';
 export { DarkCurveSweepUp, DarkCurveSweepDown } from './curve-transitions';
 export { MaskedHeading, WordReveal, TextRoll } from './animated-helpers';

@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollProgress } from "@/components/animations/scroll-progress";
+import { ScrollProgress, ScrollGlow } from "@/components/animations/scroll-progress";
 
 // ==========================================
 // 客户端全局布局
@@ -17,6 +17,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="noise-overlay">
       <ScrollProgress />
+      <ScrollGlow />
       {children}
     </div>
   );

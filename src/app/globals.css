@@ -372,83 +372,83 @@ html {
 /* ==========================================
    滚动条 / Scrollbar
    ==========================================
-   风格：白色胶囊滑块 + 外发光 + 静止时自上而下的扫光。
+   白色滑块 + 白色柔光。
 
-   ⚠️ 关于「扫光」的实现限制（重要）：
-      ::-webkit-scrollbar-thumb 只支持少数几个属性，
-      transform / 伪元素 / 内部动画都不生效，
-      所以没法真的在上面滑一个光点。
-      这里的做法是给滑块铺一层「比自身略亮的竖向渐变」，
-      再让它缓慢移动 background-position ——
-      视觉上就是一道柔光从上往下扫过滑块。周期 5 秒，很克制。
-
-   ::-webkit-scrollbar 只对 Chrome / Edge / Safari 生效；
-   Firefox 走下面 @supports 里的 scrollbar-* 属性（没有扫光，
-   这是浏览器限制，Firefox 不支持自定义滚动条动画）。
+   ⚠️ 踩过的两个坑（记录下来避免以后再试）：
+   1. ::-webkit-scrollbar-thumb 不支持动画 background-position，
+      所以没法在滑块上做"扫光"效果 —— 浏览器会直接忽略该属性。
+      扫光改由 .scroll-glow 这个真实 DOM 元素实现（见下方）。
+   2. 如果滑块设了 background-image（渐变），
+      再设 background-color 是【无效】的，渐变会盖住它。
+      所以悬停状态必须修改 background-image，不能只改 background-color。
    ========================================== */
-@keyframes scrollbar-sweep {
-  0% {
-    background-position: 0% 0%;
-  }
-  100% {
-    background-position: 0% 200%;
-  }
-}
-
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 ::-webkit-scrollbar-thumb {
-  /* 亮白渐变 + 缓慢移动，制造扫光 */
+  /* 白色渐变（比纯色更有层次）。注意：这里不能加 background-position 动画 */
   background-image: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.58) 0%,
-    rgba(255, 255, 255, 0.96) 45%,
-    rgba(255, 255, 255, 0.58) 100%
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.8) 50%,
+    #ffffff 100%
   );
-  background-size: 100% 200%;
-  background-position: 0% 0%;
-  animation: scrollbar-sweep 5s linear infinite;
   border-radius: 9999px;
-  /* 内缩，滑块不贴边 */
-  border: 2px solid transparent;
+  /* ⚠️ 边框只设 1px：边框太粗会让可见滑块变窄，
+      导致扫光对不准（滚动条总宽 10px，1px 边框后可见滑块 = 8px，
+      正好和扫码层的 12px 容器居中）。 */
+  border: 1px solid transparent;
   background-clip: padding-box;
   /* 白色柔光 */
   box-shadow:
-    inset 0 0 6px rgba(255, 255, 255, 0.6),
-    0 0 10px rgba(255, 255, 255, 0.3);
-  transition: box-shadow 0.25s ease, background-color 0.25s ease;
+    inset 0 0 5px rgba(255, 255, 255, 0.7),
+    0 0 8px rgba(255, 255, 255, 0.45);
+  transition: box-shadow 0.25s ease, background-image 0.25s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #ffffff;
+  /* 悬停：渐变整体提亮（不能改 background-color，会被渐变盖住） */
+  background-image: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    #ffffff 50%,
+    #ffffff 100%
+  );
+  /* 光晕明显放大，让"变亮"肉眼可见 */
   box-shadow:
-    inset 0 0 8px rgba(255, 255, 255, 0.9),
-    0 0 18px rgba(255, 255, 255, 0.6);
+    inset 0 0 8px rgba(255, 255, 255, 1),
+    0 0 22px rgba(255, 255, 255, 0.85),
+    0 0 38px rgba(255, 255, 255, 0.4);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background-color: #ffffff;
+  background-image: linear-gradient(
+    to bottom,
+    #ffffff 0%,
+    #ffffff 50%,
+    #ffffff 100%
+  );
   box-shadow:
     inset 0 0 6px rgba(255, 255, 255, 1),
-    0 0 26px rgba(255, 255, 255, 0.8);
+    0 0 30px rgba(255, 255, 255, 1),
+    0 0 55px rgba(255, 255, 255, 0.6);
 }
 
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-/* Firefox：白色滚动条（无扫光动画，Firefox 不支持） */
+/* Firefox：白色滚动条（无扫光，Firefox 不支持自定义滚动条动画） */
 @supports not selector(::-webkit-scrollbar) {
   html {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.85) rgba(255, 255, 255, 0.04);
+    scrollbar-color: rgba(255, 255, 255, 0.9) rgba(255, 255, 255, 0.035);
   }
 }
 
@@ -479,6 +479,73 @@ html {
 
 .cursor-pulse {
   animation: cursor-pulse 2s ease-in-out infinite;
+}
+
+/* ==========================================
+   滚动条上的扫光 / Scrollbar Glow Sweep
+   ==========================================
+   因为 ::-webkit-scrollbar-thumb 不能做动画（见上方说明），
+   这里用一个【真实的 DOM 元素】贴在滚动条位置上来实现扫光。
+
+   【对齐计算】这是关键，之前算错过一次：
+     滚动条总宽           10px
+     滑块 1px 透明边框  →  可见滑块 8px，居中于滚动条
+     容器宽度             12px  ← 内部 50% 正好 = 6px，
+                                  也就对准了滚动条的 6px 中心？
+
+     ⚠️ 不能靠容器 50% 来对齐。容器是贴在视口右边缘的，
+        它的中心必然比滚动条中心偏左 1px（滚动条占最右边 10px，
+        容器占最右边 12px）。所以改用「右对齐」定位：
+        光带贴着右边缘，再用 right 偏移微调，避免偏移问题。
+
+   ⚠️ 整条 pointer-events: none，所以不会挡住滚动条或页面点击。
+   ========================================== */
+.scroll-glow {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 100vh;
+  pointer-events: none;
+  /* 比滚动条高一层，但低于导航栏(z-50)和光标(z-9999) */
+  z-index: 40;
+  overflow: hidden;
+}
+
+/* 光带本体：贴右边缘定位，避免"跑到滚动条旁边" */
+.scroll-glow::after {
+  content: "";
+  position: absolute;
+  /* 滚动条 10px 宽，光带 3px 宽 → 右边留 3.5px 让光带居中在滚动条上 */
+  right: 3.5px;
+  width: 3px;
+  height: 22vh;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 100%
+  );
+  /* 轻微模糊，让光带边缘柔和、和滑块的光晕融为一体 */
+  filter: blur(1px);
+  animation: scroll-glow-sweep 6s ease-in-out infinite;
+}
+
+@keyframes scroll-glow-sweep {
+  0% {
+    top: -25%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
 }
 
 ::selection {
