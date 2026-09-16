@@ -2,15 +2,15 @@
 // 项目数据 / Projects Data
 //
 // 这个文件控制两个地方：
-// 1. 首页的「Featured Projects」横向卡片（走 longDescription / features）
-// 2. /projects 页面的项目网格（走 description / technologies / category）
+// 1. 首页的「精选项目」横向卡片（走 longDescription / features）
+// 2. /projects 页面的项目卡片（走 description / technologies / category）
 //
-// 内容来源：个人工作经历（友电国际 + 南昌水岚州交通项目）
+// 目前共 4 个项目（已移除「南昌水岚州交通项目」）。
 // ==========================================
 
 // 分类：决定 /projects 页面的筛选按钮
 export type ProjectCategory =
-  | "engineering" // 工程项目 / 施工
+  | "engineering" // 工程项目 / 施工（仅首页展示的那个项目用）
   | "digital" // 独立站 / 国际站 / 数字化
   | "supply-chain" // 供应链
   | "product"; // 产品与硬件设计
@@ -51,6 +51,11 @@ export interface Project {
   period: string;
 
   category: ProjectCategory;
+
+  // 标记为 true 时：不在 /projects 页面展示，
+  // 但仍然会出现在首页「精选项目」列表里。
+  // 用于「首页要展示、独立项目页不展示」的条目。
+  hiddenOnProjectsPage?: boolean;
 }
 
 export const projects: Project[] = [
@@ -78,9 +83,11 @@ export const projects: Project[] = [
       "统筹施工进度与施工工艺把控",
       "主导项目现场复勘",
     ],
-    image: "/images/projects/community-dashboard/community.webp",
+    image: "/images/projects/01-nanchang-project.webp",
     period: "早期经历",
     category: "engineering",
+    // ⚠️ 只在首页「精选项目」展示，/projects 页面不展示
+    hiddenOnProjectsPage: true,
   },
   {
     id: "youpower-global-channels",
@@ -108,7 +115,7 @@ export const projects: Project[] = [
       "国际站累计获取潜在客户 60+ 家公司",
       "成交客户 20 家，跑通建站到成交闭环",
     ],
-    image: "/images/projects/portfolio-v1/portfolio4.webp",
+    image: "/images/projects/02-global-channels.webp",
     period: "友电国际",
     category: "digital",
   },
@@ -136,7 +143,7 @@ export const projects: Project[] = [
       "采购成本相较成立初期降低 27%",
       "建立成本谈判与质量交付标准",
     ],
-    image: "/images/projects/syncverse/syncverse.webp",
+    image: "/images/projects/03-supply-chain.webp",
     period: "友电国际",
     category: "supply-chain",
   },
@@ -164,7 +171,7 @@ export const projects: Project[] = [
       "推动打样、测试与产品认证",
       "完成量产导入并支撑外贸订单交付",
     ],
-    image: "/images/projects/portfolio-v2.png",
+    image: "/images/projects/04-product-design.png",
     period: "友电国际",
     category: "product",
   },
@@ -194,8 +201,27 @@ export const projects: Project[] = [
       "完成葡萄牙语 UI 本地化适配",
       "打通巴西本地充电业务流程",
     ],
-    image: "/images/student-result-analyzer/result.webp",
+    image: "/images/projects/05-brazil-ocpp.webp",
     period: "友电国际 · 巴西市场",
     category: "digital",
   },
 ];
+
+// ==========================================
+// 供 /projects 页面使用的列表
+//
+// ⚠️ 必须定义在 projects 数组【之后】。
+//    放在前面会触发 TDZ 错误：
+//    "Block-scoped variable 'projects' used before its declaration"
+//    （const 没有变量提升，定义前访问会直接抛错）
+//
+// 作用：过滤掉标记了 hiddenOnProjectsPage 的项目。
+//
+// 目前的分工：
+//   首页「精选项目」  → 用完整的 projects（5 个，含水岚州）
+//   /projects 页面    → 用 projectsForProjectsPage（4 个，不含水岚州）
+// ==========================================
+export const projectsForProjectsPage = projects.filter(
+  (project) => !project.hiddenOnProjectsPage
+);
+

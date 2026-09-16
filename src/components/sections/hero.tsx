@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ANIMATION_VARIANTS } from "@/lib/constants";
@@ -49,22 +49,6 @@ function AnimatedName() {
   // 照片是否展开
   const [isOpen, setIsOpen] = useState(false);
 
-  // 是否为手机/窄屏。手机没有悬停概念，照片改为常驻显示。
-  // 初始值是 false（和服务器渲染一致），挂载后再根据真实宽度修正，
-  // 避免服务端/客户端渲染不一致导致的水合报错。
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    setIsMobile(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  // 照片/姓名的展开状态：手机端始终展开，桌面端看 isOpen
-  const show = isOpen || isMobile;
-
   const handleMouseMove = (e: React.MouseEvent) => {
     const { clientX, clientY } = e;
     const { innerWidth, innerHeight } = window;
@@ -100,50 +84,57 @@ function AnimatedName() {
 
           pointer-events-none 让鼠标事件穿透到下面的触发区，
           这样鼠标停在照片任何位置都还在区域内，不会关闭。 */}
+      {/* 照片：只在【桌面端悬停姓名时】浮出。
+          ⚠️ 手机端完全不显示 —— 手机没有悬停概念，
+             而且手机首屏应该只保留名字，不要被照片占据。
+
+          实现方式：容器加 hidden md:block，
+          手机端直接不渲染成布局块，同时也不会抢走名字的空间。
+
+          pointer-events-none 让鼠标事件穿透到下面的触发区，
+          这样鼠标停在照片任何位置都还在区域内，不会关闭。 */}
       <motion.div
         style={{
           x: useTransform(smoothX, (x) => -x * 1.5),
           y: useTransform(smoothY, (y) => -y * 1.5),
           // 展开：清晰、放大、轻微右倾；收起：模糊、缩小、左倾
-          opacity: show ? 1 : 0,
-          transform: show ? "scale(1) rotate(3deg)" : "scale(0.9) rotate(-6deg)",
-          filter: show ? "blur(0px)" : "blur(6px)",
+          opacity: isOpen ? 1 : 0,
+          transform: isOpen ? "scale(1) rotate(3deg)" : "scale(0.9) rotate(-6deg)",
+          filter: isOpen ? "blur(0px)" : "blur(6px)",
           transition:
             "opacity 500ms ease-out, transform 500ms ease-out, filter 500ms ease-out",
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-64 h-80 md:w-[26rem] md:h-96 pointer-events-none"
+        className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 md:w-[26rem] md:h-96 pointer-events-none"
       >
         <div className="w-full h-full relative rounded-2xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.7)] border border-white/20 bg-[#0A0A0A]">
           <Image
             src="/images/profile-hero.jpg"
             alt="李世豪 Kevin"
             fill
-            sizes="(max-width: 768px) 256px, 416px"
+            sizes="416px"
             className="object-cover object-[center_25%]"
             priority
           />
         </div>
       </motion.div>
 
-      {/* 姓名：垂直水平居中在容器里。
-          ⚠️ 这里绝对不能用 h-0 —— 姓名自带 overflow-hidden（遮罩动画需要），
-             高度为 0 会把文字上下裁掉，看起来就是"字变小/被切平"。
+      {/* 姓名：桌面端垂直居中在固定高度容器里（容器高度 = 照片高度），
+          这样鼠标可以在「文字 ↔ 照片」之间自由移动而不关闭。
 
-          容器高度由 h-80 / md:h-96 决定（= 照片高度），
-          所以鼠标可以在「文字 ↔ 照片」之间自由移动而不关闭，
-          容器也只占照片那一块，不会盖住下方按钮。
+          ⚠️ 手机端容器改为自适应高度（max-md:h-auto）：
+             因为手机端没有照片，不需要那段预留空间，
+             否则首屏会被撑高、名字位置偏下。
 
           z-40 高于照片，保证悬停事件由它接收。 */}
-      <div className="relative z-40 h-80 md:h-96 flex items-center justify-center">
+      <div className="relative z-40 max-md:h-auto h-96 flex items-center justify-center">
         <motion.h1
           style={{
             x: smoothX,
             y: smoothY,
-            // 照片展开时姓名完全淡出。
-            // 故意用 opacity 0 而不是半透明 ——
-            // 姓名文字比照片宽，只要留一点透明度就会从照片左右两边露出来。
-            opacity: show ? 0 : 1,
-            filter: show ? "blur(4px)" : "blur(0px)",
+            // 照片展开时姓名淡出。用 isOpen 而不是 show ——
+            // 手机端没有照片，名字必须始终可见。
+            opacity: isOpen ? 0 : 1,
+            filter: isOpen ? "blur(4px)" : "blur(0px)",
             transition: "opacity 400ms ease-out, filter 400ms ease-out",
           }}
           className="flex items-center font-display text-5xl md:text-7xl lg:text-8xl font-black overflow-hidden select-none pb-4 tracking-tighter cursor-pointer"
